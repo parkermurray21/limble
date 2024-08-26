@@ -1,0 +1,44 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "mysql"
+  url      = env("DATABASE_URL")
+}
+
+model locations {
+  id    Int     @id @default(autoincrement())
+  name  String  @unique(map: "name") @db.VarChar(30)
+  tasks tasks[]
+}
+
+model logged_time {
+  id           Int     @id @default(autoincrement())
+  time_seconds Int
+  task_id      Int
+  worker_id    Int
+  tasks        tasks   @relation(fields: [task_id], references: [id], onDelete: Cascade, onUpdate: Restrict, map: "logged_time_ibfk_1")
+  workers      workers @relation(fields: [worker_id], references: [id], onDelete: Cascade, onUpdate: Restrict, map: "logged_time_ibfk_2")
+
+  @@index([task_id], map: "task_id")
+  @@index([worker_id], map: "worker_id")
+}
+
+model tasks {
+  id          Int           @id @default(autoincrement())
+  description String        @db.VarChar(100)
+  location_id Int
+  status      String?       @db.VarChar(100)
+  logged_time logged_time[]
+  locations   locations     @relation(fields: [location_id], references: [id], onDelete: Cascade, onUpdate: Restrict, map: "tasks_ibfk_1")
+
+  @@index([location_id], map: "location_id")
+}
+
+model workers {
+  id          Int           @id @default(autoincrement())
+  username    String        @unique(map: "username") @db.VarChar(30)
+  hourly_wage Decimal       @db.Decimal(5, 2)
+  logged_time logged_time[]
+}
